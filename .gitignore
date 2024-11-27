@@ -31,6 +31,6 @@
 ehthumbs.db
 
 # Output files and plots
-.root
-.png
-.pdf
+*.root
+*.png
+*.pdf
