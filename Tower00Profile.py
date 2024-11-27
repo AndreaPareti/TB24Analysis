@@ -24,14 +24,14 @@ def main():
 
 
     # variable used for profile plots
-    varProf = "YDWC2"
+    varProf = "XDWC2"
     infolder = "/home/storage/data_apareti/TB24/T00scan/"
     treename = "Ftree" 
 
     t00 = "TS00"; t10="TS10"; t11="TS11"; t12="TS12"; t13="TS13"; t14="TS14"; t15="TS15"; t16="TS16"; t17="TS17"  
 
     #t00 = "TC00"; t00="TC00"; t11="TC11"; t12="TC12"; t13="TC13"; t14="TC14"; t15="TC15"; t16="TC16"; t17="TC17" 
-    channel = "S" #"C"
+    channel = "S" # choose "S" or "C"
 
     totE = ""
     if (channel=="S"): totE = "totPMTSene"
@@ -121,7 +121,6 @@ def main():
 
 
             t00Prof = ROOT.TProfile("t00ProfRun{0}".format(colrun[index]), "T{1}00ProfRun{0}{2}; {3} [mm]; E [GeV]".format(colrun[index], channel, colname, varProf), 30, min_bin, max_bin)
-            t10Prof = ROOT.TProfile("t10ProfRun{0}".format(colrun[index]), "T{1}10ProfRun{0}{2}; {3} [mm]; E [GeV]".format(colrun[index], channel, colname, varProf), 30, min_bin, max_bin)
             t11Prof = ROOT.TProfile("t11ProfRun{0}".format(colrun[index]), "T{1}11ProfRun{0}{2}; {3} [mm]; E [GeV]".format(colrun[index], channel, colname, varProf), 30, min_bin, max_bin)
             t15Prof = ROOT.TProfile("t15ProfRun{0}".format(colrun[index]), "T{1}15ProfRun{0}{2}; {3} [mm]; E [GeV]".format(colrun[index], channel, colname, varProf), 30, min_bin, max_bin)
             t16Prof = ROOT.TProfile("t16ProfRun{0}".format(colrun[index]), "T{1}16ProfRun{0}{2}; {3} [mm]; E [GeV]".format(colrun[index], channel, colname, varProf), 30, min_bin, max_bin)
@@ -162,7 +161,7 @@ def main():
 
             ctest = ROOT.TCanvas("c{0}{1}".format(row, colname), "c{0}{1}".format(row, colname), 1400, 1200)
             totEProf.SetMinimum(0.); totEProf.SetMaximum(24.)
-            totEProf.SetTitle("Energy Profile Run {0}".format(colrun[index]))
+            totEProf.SetTitle("{1} Energy Profile Run {0}".format(colrun[index], channel))
             totEProf.Draw()
             t00Prof.Draw("same")
             t15Prof.Draw("same")
@@ -190,7 +189,7 @@ def main():
 
             leg.Draw()
 
-            ctest.SaveAs("T00scan_{0}{1}.png".format(row, colname))
+            ctest.SaveAs("T{3}00scan_{0}{1}_{2}.png".format(row, colname, varProf, channel))
 
 
 
