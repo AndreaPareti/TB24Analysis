@@ -33,10 +33,10 @@ def main():
     LinGraph_S.SetLineColor(ROOT.kRed); LinGraph_S.SetLineWidth(2)
 
     LinGraph_C = ROOT.TGraphErrors(len(Energy), Energy, (Mean_C-Energy)/Energy, 0, MeanErr_C/Energy)
-    LinGraph_C.SetLineColor(ROOT.kBlue); LinGraph_S.SetLineWidth(2)
+    LinGraph_C.SetLineColor(ROOT.kBlue); LinGraph_C.SetLineWidth(2)
 
     LinGraph_Comb = ROOT.TGraphErrors(len(Energy), Energy, (Mean_Comb-Energy)/Energy, 0, MeanErr_Comb/Energy)
-    LinGraph_Comb.SetLineColor(ROOT.kGreen+1); LinGraph_S.SetLineWidth(2)
+    LinGraph_Comb.SetLineColor(ROOT.kGreen+1); LinGraph_Comb.SetLineWidth(2)
 
 
     LinearityMultiGraph.Add(LinGraph_S, "PL")
