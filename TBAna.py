@@ -36,8 +36,8 @@ def main():
         data["AsymC"] = (data["TC11"] - data["TC15"]) / (data["TC11"] + data["TC15"] )
 
         # Profile normalised energy Vs Asymmetry
-        eneSprof = ROOT.TProfile("eneSprof_{0}GeV".format(energy), "eneSprof_{0}GeV".format(energy), 100, -1, 1)
-        eneCprof = ROOT.TProfile("eneCprof_{0}GeV".format(energy), "eneCprof_{0}GeV".format(energy), 100, -1, 1)
+        eneSprof = ROOT.TProfile("eneSprof_{0}GeV".format(energy), "S Energy profile over Asymmetry {0}GeV; TS11-TS15 / TS11 + TS15; totPMTSene/E".format(energy), 100, -1, 1)
+        eneCprof = ROOT.TProfile("eneCprof_{0}GeV".format(energy), "C Energy profile over Asymmetry {0}GeV; TC11-TC15 / TC11 + TC15; totPMTCene/E".format(energy), 100, -1, 1)
 
         for eneS, asymS, eneC, asymC in zip(data["totPMTSene"].values, data["AsymS"].values, data["totPMTCene"].values, data["AsymC"].values):
             eneSprof.Fill(asymS, eneS/energy)
@@ -109,9 +109,9 @@ def main():
 
 
         # Fill histograms with corrected energy values
-        EneHistS = ROOT.TH1D("EneHistS_{0}GeV".format(energy), "EneHistS_{0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        EneHistC = ROOT.TH1D("EneHistC_{0}GeV".format(energy), "EneHistC_{0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        EneHistComb = ROOT.TH1D("EneHistComb_{0}GeV".format(energy), "EneHistCombined_{0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
+        EneHistS = ROOT.TH1D("EneHistS_{0}GeV".format(energy), "S Energy (corrected) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
+        EneHistC = ROOT.TH1D("EneHistC_{0}GeV".format(energy), "C Energy (corrected) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
+        EneHistComb = ROOT.TH1D("EneHistComb_{0}GeV".format(energy), "(S+C)/2 {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
 
 
         # filter tree using only events with an asymmetry within range
