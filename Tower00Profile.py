@@ -16,26 +16,31 @@ def main():
     CenterColumn = ["1010", "1018", "1011"]
     RightColumn = ["1004", "1002", "1003"]
 
-    column_names = ["Left", "MidLeft", "Center", "Right"]
+    column_names = ["Left", "MidLeft", "Middle", "Right"]
     column_runs = [LeftColumn, MidLeftColumn, CenterColumn, RightColumn] 
     myCut = "(abs(XDWC2 - XDWC1) < 5) & (abs(YDWC2 - YDWC1)<5) & (MCounter<200) & (TailC<300) & (C2>160) & ( (totLeakage - L20)<5000 ) & (PShower>550)"
 
-    Rows = ["Up", "Middle", "Down"]
+    Rows = ["Up", "Center", "Down"]
 
 
     # variable used for profile plots
-    varProf = "XDWC2"
+    varProf = "YDWC2"
     infolder = "/home/storage/data_apareti/TB24/T00scan/"
     treename = "Ftree" 
 
-    t00 = "TS00"; t10="TS10"; t11="TS11"; t12="TS12"; t13="TS13"; t14="TS14"; t15="TS15"; t16="TS16"; t17="TS17"  
+    t00 = ""; t10=""; t11=""; t12=""; t13=""; t14=""; t15=""; t16=""; t17=""  
 
     #t00 = "TC00"; t00="TC00"; t11="TC11"; t12="TC12"; t13="TC13"; t14="TC14"; t15="TC15"; t16="TC16"; t17="TC17" 
-    channel = "S" # choose "S" or "C"
+    channel = "C" # choose "S" or "C"
 
     totE = ""
-    if (channel=="S"): totE = "totPMTSene"
-    elif(channel=="C"): totE = "totPMTCene"  
+    if (channel=="S"):
+        totE = "totPMTSene"
+        t00 = "TS00"; t10="TS10"; t11="TS11"; t12="TS12"; t13="TS13"; t14="TS14"; t15="TS15"; t16="TS16"; t17="TS17"  
+    elif(channel=="C"): 
+        totE = "totPMTCene"  
+        t00 = "TC00"; t10="TC10"; t11="TC11"; t12="TC12"; t13="TC13"; t14="TC14"; t15="TC15"; t16="TC16"; t17="TC17" 
+
 
     branches = [varProf, t00, t11, t12, t13, t14, t15, t16, t17, totE]
 
@@ -51,63 +56,7 @@ def main():
 
         filename_up = "physics_sps2024_run" + run_up + ".root"
         filename_center = "physics_sps2024_run" + run_center + ".root"
-        filename_down = "physics_sps2024_run" + run_down + ".root"
-
-        '''
-        file_up = uproot.open(infolder+filename_up)
-        tree_up = file_up[treename]
-        data_up = tree_up.arrays(cut=myCut, library="pd")
-        #print(data_up)
-
-
-        file_center = uproot.open(infolder+filename_center)
-        tree_center = file_center[treename]
-        data_center = tree_center.arrays(cut=myCut, library="pd")
-        #print(data_center)
-
-
-        file_down = uproot.open(infolder+filename_down)
-        tree_down = file_down[treename]
-        data_down = tree_down.arrays(cut=myCut, library="pd")
-        #print(data_down)
-
-        # Profile plots: for each point show T00, T11 and T15 contributions
-        # for Right and Left columns, also add lateral towers (Left: T16, T17, T10, Right: T14, T13, T12)
-
-        t00_up_Prof = ROOT.TProfile("t00_up_ProfRun{0}".format(run_up), "T{1}00_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t11_up_Prof = ROOT.TProfile("t11_up_ProfRun{0}".format(run_up), "T{1}11_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t15_up_Prof = ROOT.TProfile("t15_up_ProfRun{0}".format(run_up), "T{1}15_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t16_up_Prof = ROOT.TProfile("t16_up_ProfRun{0}".format(run_up), "T{1}16_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t17_up_Prof = ROOT.TProfile("t17_up_ProfRun{0}".format(run_up), "T{1}17_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t10_up_Prof = ROOT.TProfile("t10_up_ProfRun{0}".format(run_up), "T{1}10_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t14_up_Prof = ROOT.TProfile("t14_up_ProfRun{0}".format(run_up), "T{1}14_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t13_up_Prof = ROOT.TProfile("t13_up_ProfRun{0}".format(run_up), "T{1}13_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t12_up_Prof = ROOT.TProfile("t12_up_ProfRun{0}".format(run_up), "T{1}12_up_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        
-
-        t00_center_Prof = ROOT.TProfile("t00_center_ProfRun{0}".format(run_up), "T{1}00_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t11_center_Prof = ROOT.TProfile("t11_center_ProfRun{0}".format(run_up), "T{1}11_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t15_center_Prof = ROOT.TProfile("t15_center_ProfRun{0}".format(run_up), "T{1}15_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t16_center_Prof = ROOT.TProfile("t16_center_ProfRun{0}".format(run_up), "T{1}16_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t17_center_Prof = ROOT.TProfile("t17_center_ProfRun{0}".format(run_up), "T{1}17_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t10_center_Prof = ROOT.TProfile("t10_center_ProfRun{0}".format(run_up), "T{1}10_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t14_center_Prof = ROOT.TProfile("t14_center_ProfRun{0}".format(run_up), "T{1}14_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t13_center_Prof = ROOT.TProfile("t13_center_ProfRun{0}".format(run_up), "T{1}13_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t12_center_Prof = ROOT.TProfile("t12_center_ProfRun{0}".format(run_up), "T{1}12_center_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        
-
-
-        t00_down_Prof = ROOT.TProfile("t00_down_ProfRun{0}".format(run_up), "T{1}00_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t11_down_Prof = ROOT.TProfile("t11_down_ProfRun{0}".format(run_up), "T{1}11_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t15_down_Prof = ROOT.TProfile("t15_down_ProfRun{0}".format(run_up), "T{1}15_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t16_down_Prof = ROOT.TProfile("t16_down_ProfRun{0}".format(run_up), "T{1}16_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t17_down_Prof = ROOT.TProfile("t17_down_ProfRun{0}".format(run_up), "T{1}17_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t10_down_Prof = ROOT.TProfile("t10_down_ProfRun{0}".format(run_up), "T{1}10_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t14_down_Prof = ROOT.TProfile("t14_down_ProfRun{0}".format(run_up), "T{1}14_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t13_down_Prof = ROOT.TProfile("t13_down_ProfRun{0}".format(run_up), "T{1}13_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        t12_down_Prof = ROOT.TProfile("t12_down_ProfRun{0}".format(run_up), "T{1}12_down_ProfRun{0}".format(run_up, channel), 30, min_bin, max_bin)
-        '''
-        
+        filename_down = "physics_sps2024_run" + run_down + ".root"      
 
         for index, row in enumerate(Rows):
             #print(index, row, colrun[index]) 
