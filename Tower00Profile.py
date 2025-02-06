@@ -24,7 +24,7 @@ def main():
 
 
     # variable used for profile plots
-    varProf = "YDWC2"
+    varProf = "XDWC2"
     infolder = "/home/storage/data_apareti/TB24/T00scan/"
     treename = "Ftree" 
 

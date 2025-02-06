@@ -1,11 +1,25 @@
 import pandas as pd
 import numpy as np
 import ROOT
+import argparse
 
 
 
 def main():
     print("Hello there")
+    # Create the argument parser
+    parser = argparse.ArgumentParser(description="Input particles")
+    
+    # Add arguments
+    parser.add_argument("--particle", type=str, required=True, help="Name of the particle.")
+    
+    # Parse the arguments
+    args = parser.parse_args()
+    
+    # Access the `particle` argument
+    particle = args.particle
+    print(f"Particle name provided: {particle}")
+
     df = pd.read_csv("DRcaloData.csv", header=0, sep="\t")  # Load CSV
     print(df)
     #columns = [df[i].to_numpy() for i in df.columns]  # Convert each column to a NumPy array
@@ -20,7 +34,7 @@ def main():
 
 
     # Linearity Plot
-    c_linearity = ROOT.TCanvas("c_linearity", "c_linearity", 1500, 1200)
+    c_linearity = ROOT.TCanvas("c_linearity", "c_linearity", 1400, 1200)
     c_linearity.SetLeftMargin(0.15); c_linearity.SetRightMargin(0.03)
     c_linearity.SetTopMargin(0.07)
 
@@ -45,7 +59,7 @@ def main():
 
 
 
-    LinearityMultiGraph.SetTitle("Linearity (electrons)")
+    LinearityMultiGraph.SetTitle(f"Linearity ({particle})")
     LinearityMultiGraph.GetXaxis().SetTitle(r"E_{beam} [GeV]"); LinearityMultiGraph.GetYaxis().SetTitle(r"E_{beam}-E_{reco} / E_{beam}")
 
     LinearityMultiGraph.SetMinimum(-0.04)
@@ -110,7 +124,7 @@ def main():
     legend.AddEntry(LinGraph_Comb, "Combined", "PL")
 
     legend.Draw("same")
-    c_linearity.SaveAs("LinearityPlotTest.png")
+    c_linearity.SaveAs(f"LinearityPlotTest_{particle}.png")
 
 
     # Resolution Plot
@@ -171,7 +185,7 @@ def main():
     ResMultiGraph.Add(RMSGraph_Comb, "PE")
 
 
-    ResMultiGraph.SetTitle("Electron Resolution in [10, 120] GeV Range")
+    ResMultiGraph.SetTitle(f"Energy Resolution in [10, 120] GeV Range ({particle})")
     ResMultiGraph.GetXaxis().SetTitle(r"1/#sqrt{E_{Reco}} [GeV]^{-1/2}")
     ResMultiGraph.GetYaxis().SetTitle(r"#sigma / E_{Reco}")
 
@@ -205,7 +219,7 @@ def main():
     tex1.SetLineWidth(2)
     tex1.Draw("same")	
 
-    c_res.SaveAs("ResolutionPlot.png")
+    c_res.SaveAs(f"ResolutionPlot_{particle}.png")
 
 
 
@@ -227,7 +241,8 @@ def main():
 
     QuadResMultiGraph = ROOT.TMultiGraph()
 
-    RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_S), SigmaOverE_S, 0, SigmaOverE_err_S)
+    #RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_S), SigmaOverE_S, 0, SigmaOverE_err_S)
+    RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_S, 0, SigmaOverE_err_S)
     RMSGraph_S.SetMarkerColor(ROOT.kRed)
     RMSGraph_S.SetLineColor(ROOT.kRed); 
     FitFunction = ROOT.TF1("FitFunc",  "sqrt( ([1]*x)*([1]*x) + [0]*[0] )")
@@ -240,7 +255,8 @@ def main():
     p0_S=fit_S.GetParameter(0)*100
     p1_S=fit_S.GetParameter(1)*100
 
-    RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_C), SigmaOverE_C, 0, SigmaOverE_err_C)
+    #RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_C), SigmaOverE_C, 0, SigmaOverE_err_C)
+    RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_C, 0, SigmaOverE_err_C)
     RMSGraph_C.SetMarkerColor(ROOT.kBlue)
     RMSGraph_C.SetLineColor(ROOT.kBlue); 
     RMSGraph_C.Fit(FitFunction)
@@ -249,7 +265,8 @@ def main():
     p0_C=fit_C.GetParameter(0)*100
     p1_C=fit_C.GetParameter(1)*100
 
-    RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_Comb), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
+    #RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_Comb), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
+    RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
     RMSGraph_Comb.SetMarkerColor(ROOT.kGreen+1)
     RMSGraph_Comb.SetLineColor(ROOT.kGreen+1); 
     RMSGraph_Comb.Fit(FitFunction)
@@ -272,8 +289,8 @@ def main():
     QuadResMultiGraph.Add(RMSGraph_Comb, "PE")
 
 
-    QuadResMultiGraph.SetTitle("Electron QuadResolution in [10, 120] GeV Range")
-    QuadResMultiGraph.GetXaxis().SetTitle(r"1/#sqrt{E_{Reco}} [GeV]^{-1/2}")
+    QuadResMultiGraph.SetTitle(f"Energy Resolution in [10, 120] GeV Range ({particle})")
+    QuadResMultiGraph.GetXaxis().SetTitle(r"1/#sqrt{E_{Beam}} [GeV]^{-1/2}")
     QuadResMultiGraph.GetYaxis().SetTitle(r"#sigma / E_{Reco}")
 
     QuadResMultiGraph.Draw("AP")
@@ -306,7 +323,7 @@ def main():
     tex1.SetLineWidth(2)
     tex1.Draw("same")	
 
-    c_quad.SaveAs("QuadResolutionPlot.png")
+    c_quad.SaveAs(f"QuadResolutionPlot_{particle}.png")
 
 
 
