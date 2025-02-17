@@ -62,8 +62,11 @@ def main():
     LinearityMultiGraph.SetTitle(f"Linearity ({particle})")
     LinearityMultiGraph.GetXaxis().SetTitle(r"E_{beam} [GeV]"); LinearityMultiGraph.GetYaxis().SetTitle(r"E_{beam}-E_{reco} / E_{beam}")
 
-    LinearityMultiGraph.SetMinimum(-0.04)
-    LinearityMultiGraph.SetMaximum(0.04)
+    #LinearityMultiGraph.SetMinimum(-0.04)
+    #LinearityMultiGraph.SetMaximum(0.04)
+    LinearityMultiGraph.SetMinimum(-0.1)
+    LinearityMultiGraph.SetMaximum(0.1)
+
     LinearityMultiGraph.Draw("AP")
 
 
@@ -144,7 +147,8 @@ def main():
 
     ResMultiGraph = ROOT.TMultiGraph()
 
-    RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_S), SigmaOverE_S, 0, SigmaOverE_err_S)
+    #RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_S), SigmaOverE_S, 0, SigmaOverE_err_S)
+    RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_S, 0, SigmaOverE_err_S)
     RMSGraph_S.SetMarkerColor(ROOT.kRed)
     RMSGraph_S.SetLineColor(ROOT.kRed); 
     RMSGraph_S.Fit("pol1")
@@ -153,7 +157,9 @@ def main():
     p0_S=fit_S.GetParameter(0)*100
     p1_S=fit_S.GetParameter(1)*100
 
-    RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_C), SigmaOverE_C, 0, SigmaOverE_err_C)
+
+    #RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_C), SigmaOverE_C, 0, SigmaOverE_err_C)
+    RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_C, 0, SigmaOverE_err_C)
     RMSGraph_C.SetMarkerColor(ROOT.kBlue)
     RMSGraph_C.SetLineColor(ROOT.kBlue); 
     RMSGraph_C.Fit("pol1")
@@ -162,7 +168,8 @@ def main():
     p0_C=fit_C.GetParameter(0)*100
     p1_C=fit_C.GetParameter(1)*100
 
-    RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_Comb), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
+    #RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_Comb), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
+    RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
     RMSGraph_Comb.SetMarkerColor(ROOT.kGreen+1)
     RMSGraph_Comb.SetLineColor(ROOT.kGreen+1); 
     RMSGraph_Comb.Fit("pol1")
@@ -243,7 +250,7 @@ def main():
 
     #RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_S), SigmaOverE_S, 0, SigmaOverE_err_S)
     RMSGraph_S = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_S, 0, SigmaOverE_err_S)
-    RMSGraph_S.SetMarkerColor(ROOT.kRed)
+    RMSGraph_S.SetMarkerColor(ROOT.kRed); RMSGraph_S.SetMarkerStyle(20)
     RMSGraph_S.SetLineColor(ROOT.kRed); 
     FitFunction = ROOT.TF1("FitFunc",  "sqrt( ([1]*x)*([1]*x) + [0]*[0] )")
     FitFunction.SetParameters(0.1, 0.1)
@@ -257,7 +264,7 @@ def main():
 
     #RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_C), SigmaOverE_C, 0, SigmaOverE_err_C)
     RMSGraph_C = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_C, 0, SigmaOverE_err_C)
-    RMSGraph_C.SetMarkerColor(ROOT.kBlue)
+    RMSGraph_C.SetMarkerColor(ROOT.kBlue); RMSGraph_C.SetMarkerStyle(20)
     RMSGraph_C.SetLineColor(ROOT.kBlue); 
     RMSGraph_C.Fit(FitFunction)
     fit_C = RMSGraph_C.GetFunction("FitFunc")
@@ -267,7 +274,7 @@ def main():
 
     #RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Mean_Comb), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
     RMSGraph_Comb = ROOT.TGraphErrors(len(Energy), 1/np.sqrt(Energy), SigmaOverE_Comb, 0, SigmaOverE_err_Comb)
-    RMSGraph_Comb.SetMarkerColor(ROOT.kGreen+1)
+    RMSGraph_Comb.SetMarkerColor(ROOT.kGreen+1); RMSGraph_Comb.SetMarkerStyle(20)
     RMSGraph_Comb.SetLineColor(ROOT.kGreen+1); 
     RMSGraph_Comb.Fit(FitFunction)
     fit_Comb = RMSGraph_Comb.GetFunction("FitFunc")
