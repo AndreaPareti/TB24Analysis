@@ -5,14 +5,14 @@ import uproot
 
 
 #infolder = "/home/storage/data_apareti/TB24/PionScan_OldHVsaturated/"
-infolder = "/home/storage/data_apareti/TB24/PionScan/"
+infolder = "/home/storage/data_apareti/TB24/PionEnergyScan/"
 #infolder = "/home/storage/data_apareti/TB24/PionScanCorrected/pion24/"
 pedfolder = "/home/storage/data_apareti/TB24/PedestalRuns/"
 treename = "Ftree"
 chi_value = 0.35
 #chi_value = 0.75
 
-containment = 0.875
+#containment = 0.875
 
 
 # Mean Z barycenter for electromagnetic showers at 40 GeV
@@ -73,7 +73,7 @@ def GetPMTnoise():
 
 
 
-def GetDFparametrization(run, Cut, filename, energy): 
+def GetDF(run, Cut, filename, energy, containment): 
     print("Using file: ", filename, energy)
     root_file = uproot.open(infolder+filename)
     tree = root_file[treename]
@@ -105,6 +105,10 @@ def GetDFparametrization(run, Cut, filename, energy):
     # input truth energy to dataframe
     data["TruthE"] = energy
 
+    return data
+
+
+def GetAsymProfiles(data, energy):
 
     # Profile normalised energy Vs Asymmetry
     DReneAsymSprof = ROOT.TProfile("DReneAsymSprof_{0}GeV".format(energy), r" DR Energy profile over Asymmetry(S) {0}GeV; TS24-TS21 / TS24 + TS21; E_DR/E".format(energy), 100, -1, 1)
@@ -114,23 +118,40 @@ def GetDFparametrization(run, Cut, filename, energy):
     SciAsymprof = ROOT.TProfile("sciprof_{0}GeV".format(energy), "totPMTSene profile over Asymmetry(S) {0}GeV; TS24-TS21 / TS24 + TS21; totPMTSene/E".format(energy), 100, -1, 1)
     CerAsymprof = ROOT.TProfile("cerprof_{0}GeV".format(energy), "totPMTCene profile over Asymmetry(C) {0}GeV; TC24-TC21 / TC24 + TC21; totPMTCene/E".format(energy), 100, -1, 1)
 
+    # profile energy over TS11 or TC11 TDC information
+    #DReneStdcProf = ROOT.TProfile("DReneStdcprof_{0}GeV".format(energy), r" DR Energy profile over TDC_TS11 {0}GeV; TDC_TS11 (adc); E_DR/E".format(energy), 100, 600, 720)
+    #DReneCtdcProf = ROOT.TProfile("DReneCtdcprof_{0}GeV".format(energy), r" DR Energy profile over TDC_TC11 {0}GeV; TDC_TC11 (adc); E_DR/E".format(energy), 100, 600, 720)
+    #ScieneStdcProf = ROOT.TProfile("ScieneStdcprof_{0}GeV".format(energy), r"S Energy profile over TDC_TS11 {0}GeV; TDC_TS11 (adc); E_S/E".format(energy), 100, 600, 720)
+    #CereneCtdcProf = ROOT.TProfile("CereneStdcprof_{0}GeV".format(energy), r"C Energy profile over TDC_TC11 {0}GeV; TDC_TC11 (adc); E_C/E".format(energy), 100, 600, 720)
+
     # Show reco energy Vs Asymmetry
     #SciAsymHist = ROOT.TH2D("ScivsAsymHist_{0}GeV".format(energy), "ScivsAsymHist_{0}GeV; TS24-TS21/TS24+TS21; totPMTSene".format(energy), 50, -1.5, 1.5, 50, 0., 2*energy)
     #CerAsymHist = ROOT.TH2D("CervsAsymHist_{0}GeV".format(energy), "CervsAsymHist_{0}GeV; TSC4-TC21/TC24+TC21; totPMTCene".format(energy), 50, -1.5, 1.5, 50, 0., 2*energy)
 
-
+    # Fill profiles
+    #for DRene, asymS,  asymC, tdcS, tdcC in zip(data["totDRene_cont"].values, data["AsymS"].values, data["AsymC"].values, data["TDC_TS11"].values, data["TDC_TC11"].values):
     for DRene, asymS,  asymC in zip(data["totDRene_cont"].values, data["AsymS"].values, data["AsymC"].values):
         #if(asymS < 0.9 and asymS > -0.9 and asymC < 0.9 and asymC > -0.9):
         DReneAsymSprof.Fill(asymS, DRene/energy)
         DReneAsymCprof.Fill(asymC, DRene/energy)
+        #if(tdcS > 512):
+        #    DReneStdcProf.Fill(tdcS, DRene)
+        #if(tdcC>512):
+        #    DReneCtdcProf.Fill(tdcC, DRene)
 
-    for pmtS, pmtC, asymS, asymC in zip(data["pmtS_cont"], data["pmtC_cont"], data["AsymS"], data["AsymC"]):
+    #for pmtS, pmtC, asymS, asymC, tdcS, tdcC  in zip(data["pmtS_cont"], data["pmtC_cont"], data["AsymS"], data["AsymC"], data["TDC_TS11"].values, data["TDC_TC11"].values):
+    for pmtS, pmtC, asymS, asymC, tdcS, tdcC  in zip(data["pmtS_cont"], data["pmtC_cont"], data["AsymS"], data["AsymC"], data["TDC_TS11"].values, data["TDC_TC11"].values):
         #if(asymS < 0.9 and asymS > -0.9 and asymC < 0.9 and asymC > -0.9):
         #SciAsymHist.Fill(asymS, pmtS)
         #CerAsymHist.Fill(asymC, pmtC)
         SciAsymprof.Fill(asymS, pmtS/energy)
         CerAsymprof.Fill(asymC, pmtC/energy)
+        #if(tdcS > 512):
+        #    ScieneStdcProf.Fill(tdcS, pmtS/energy)
+        #if(tdcC>512):
+        #    CereneCtdcProf.Fill(tdcC, pmtC/energy)
 
+    # Drawing colz plots
     #cSciAsym = ROOT.TCanvas("cSciAsym{}".format(energy), "cSciAsymS{}".format(energy), 1400, 1200)
     #SciAsymHist.Draw("colz")
     #cSciAsym.SaveAs("ScivsAysm{0}GeV.png".format(energy))    
@@ -139,33 +160,182 @@ def GetDFparametrization(run, Cut, filename, energy):
     #cCerAsym.SaveAs("CervsAysm{0}GeV.png".format(energy))  
 
 
-    # Fit with 5 degree polynomial
-    DReneAsymSprof.Fit("pol5", "", "", -0.9, 0.9)
-    DReneAsymCprof.Fit("pol5", "", "", -0.9, 0.9)
+    # Fit asymmetry with 5 degree polynomial
+    DReneAsymSprof.Fit("pol5", "Q", "", -0.9, 0.9)
+    DReneAsymCprof.Fit("pol5", "Q", "", -0.9, 0.9)
+    SciAsymprof.Fit("pol5", "Q", "", -0.9, 0.9)
+    CerAsymprof.Fit("pol5", "Q", "", -0.9, 0.9) 
     # Get fitted function
     fDReneAsymS = DReneAsymSprof.GetFunction("pol5")
     fDReneAsymC = DReneAsymCprof.GetFunction("pol5")
-
-    SciAsymprof.Fit("pol5", "", "", -0.9, 0.9)
-    CerAsymprof.Fit("pol5", "", "", -0.9, 0.9) 
     fPMTSeneAsym = SciAsymprof.GetFunction("pol5")
     fPMTCeneAsym = CerAsymprof.GetFunction("pol5")
+
+    # Fit TDC with a straight line
+    #DReneStdcProf.Fit("pol1", "", "", 620, 675)
+    #DReneCtdcProf.Fit("pol1", "", "", 620, 675)
+    #ScieneStdcProf.Fit("pol1", "", "", 620, 675)
+    #CereneCtdcProf.Fit("pol1", "", "", 620, 675)
+    # Get fitted function
+    #fDReneStdc = DReneStdcProf.GetFunction("pol1")
+    #fDReneCtdc = DReneCtdcProf.GetFunction("pol1")
+    #fScieneStdc = ScieneStdcProf.GetFunction("pol1")
+    #fCereneCtdc = CereneCtdcProf.GetFunction("pol1")
+
+
+    ROOT.gStyle.SetOptStat(0)
+    # Draw Profile with fit
     ctotPMTeneAsymProf = ROOT.TCanvas("ctotPMTeneAsymProf{0}".format(energy),"PMT signal over Asymmetry ({0} GeV)".format(energy), 1400, 1200)
     SciAsymprof.SetMarkerColor(ROOT.kRed); SciAsymprof.SetMarkerStyle(20); fPMTSeneAsym.SetLineColor(ROOT.kRed)
     CerAsymprof.SetMarkerColor(ROOT.kBlue); CerAsymprof.SetMarkerStyle(20); fPMTCeneAsym.SetLineColor(ROOT.kBlue)
     SciAsymprof.Draw()
     CerAsymprof.Draw("same")
     fPMTSeneAsym.Draw("same"); fPMTCeneAsym.Draw("same")
+    leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
+    leg.SetTextSize(0.018)   
+    #leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
+    leg.AddEntry(SciAsymprof, "Profile over S PMTs")
+    leg.AddEntry(CerAsymprof, "Profile over C PMTs")
+    leg.Draw()     
     ctotPMTeneAsymProf.SaveAs("PMTsignalAsym_{0}GeV.png".format(energy))
 
+    # Draw DR ene over S and C tdcs
+    #cDReneTDC = ROOT.TCanvas("cDReneTdc{0}".format(energy),"DR energy Over TDCs ({0} GeV)".format(energy), 1400, 1200)
+    #DReneStdcProf.SetMarkerColor(ROOT.kRed); DReneStdcProf.SetMarkerStyle(20); DReneStdcProf.SetLineColor(ROOT.kRed)
+    #DReneCtdcProf.SetMarkerColor(ROOT.kBlue); DReneCtdcProf.SetMarkerStyle(20); DReneCtdcProf.SetLineColor(ROOT.kBlue)
+    #fDReneStdc.SetLineColor(ROOT.kRed); fDReneCtdc.SetLineColor(ROOT.kBlue)
+    #DReneStdcProf.Draw(); DReneCtdcProf.Draw("same"); fDReneStdc.Draw("same"); fDReneCtdc.Draw("same")
+    #leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
+    #leg.SetTextSize(0.018)   
+    ##leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
+    #leg.AddEntry(DReneStdcProf, "Profile over S PMTs")
+    #leg.AddEntry(DReneCtdcProf, "Profile over C PMTs")
+    #leg.Draw()     
+    #cDReneTDC.SaveAs("DRenergyOverTDCT11_{0}GeV.png".format(energy))
+    #ROOT.gStyle.SetOptStat(111)
 
+    # Draw DR ene over S and C tdcs
+    #cPMTeneTDC = ROOT.TCanvas("cPMTeneTdc{0}".format(energy),"PMT energy Over TDCs ({0} GeV)".format(energy), 1400, 1200)
+    #ScieneStdcProf.SetMarkerColor(ROOT.kRed); ScieneStdcProf.SetMarkerStyle(20); ScieneStdcProf.SetLineColor(ROOT.kRed)
+    #CereneCtdcProf.SetMarkerColor(ROOT.kBlue); CereneCtdcProf.SetMarkerStyle(20); CereneCtdcProf.SetLineColor(ROOT.kBlue)
+    #fScieneStdc.SetLineColor(ROOT.kRed); fCereneCtdc.SetLineColor(ROOT.kBlue)
+    #ScieneStdcProf.Draw(); CereneCtdcProf.Draw("same"); fScieneStdc.Draw("same"); fCereneCtdc.Draw("same")
+    #leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
+    #leg.SetTextSize(0.018)   
+    ##leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
+    #leg.AddEntry(ScieneStdcProf, "Profile over S PMTs")
+    #leg.AddEntry(CereneCtdcProf, "Profile over C PMTs")
+    #leg.Draw()     
+    #cPMTeneTDC.SaveAs("PMTenergyOverTDCT11_{0}GeV.png".format(energy))
+    #ROOT.gStyle.SetOptStat(111)
 
-    # vectorize it
-    #fDReneAsymSvector = np.vectorize(fDReneAsymS.Eval)
-    #fDReneAsymCvector = np.vectorize(fDReneAsymC.Eval)
-    #return data
     return data, fDReneAsymS, fDReneAsymC, DReneAsymSprof, DReneAsymCprof, fPMTSeneAsym, fPMTCeneAsym, SciAsymprof, CerAsymprof
 
+
+def DrawColzPlot(outfile, ctitle, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax):
+    cCanva = ROOT.TCanvas(ctitle, "{0};{1};{2}".format(labelPlot, labelX, labelY), 1400, 1200)
+    colHist = ROOT.TH2D(ctitle, "{0};{1};{2}".format(labelPlot, labelX, labelY), nbinX, xmin, xmax, nbinY, ymin, ymax)
+    for xval, yval in zip(varX, varY):
+        colHist.Fill(xval, yval)
+    colHist.Draw("colz")
+    cCanva.SaveAs(outfile)
+
+
+def DrawProfPlot(outfile, ctitle, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, markerStyle=20, markerColor=ROOT.kBlue):
+    cCanva = ROOT.TCanvas(ctitle, "{0};{1};{2}".format(labelPlot, labelX, labelY), 1400, 1200)
+    myProf = ROOT.TProfile(ctitle, "{0};{1};{2}".format(labelPlot, labelX, labelY), nbinX, xmin, xmax)
+    for xval, yval in zip(varX, varY):
+        myProf.Fill(xval, yval)
+    myProf.SetMarkerStyle(markerStyle); myProf.SetMarkerColor(markerColor)
+    myProf.Draw("colz")
+    cCanva.SaveAs(outfile)
+
+
+
+def GetTDCProfiles(data, energy):
+
+    # profile energy over TS11 or TC11 TDC information
+    DReneStdcProf = ROOT.TProfile("DReneStdcprof_{0}GeV".format(energy), r" DR Energy profile over TDC_TS11 {0}GeV; TDC_TS11 (adc); E_DR/E".format(energy), 100, 600, 720)
+    DReneCtdcProf = ROOT.TProfile("DReneCtdcprof_{0}GeV".format(energy), r" DR Energy profile over TDC_TC11 {0}GeV; TDC_TC11 (adc); E_DR/E".format(energy), 100, 600, 720)
+    ScieneStdcProf = ROOT.TProfile("ScieneStdcprof_{0}GeV".format(energy), r"S Energy profile over TDC_TS11 {0}GeV; TDC_TS11 (adc); E_S/E".format(energy), 100, 600, 720)
+    CereneCtdcProf = ROOT.TProfile("CereneStdcprof_{0}GeV".format(energy), r"C Energy profile over TDC_TC11 {0}GeV; TDC_TC11 (adc); E_C/E".format(energy), 100, 600, 720)
+
+    # Show reco energy Vs Asymmetry
+    #SciAsymHist = ROOT.TH2D("ScivsAsymHist_{0}GeV".format(energy), "ScivsAsymHist_{0}GeV; TS24-TS21/TS24+TS21; totPMTSene".format(energy), 50, -1.5, 1.5, 50, 0., 2*energy)
+    #CerAsymHist = ROOT.TH2D("CervsAsymHist_{0}GeV".format(energy), "CervsAsymHist_{0}GeV; TSC4-TC21/TC24+TC21; totPMTCene".format(energy), 50, -1.5, 1.5, 50, 0., 2*energy)
+
+    # Fill profiles
+    for DRene, asymS,  asymC, tdcS, tdcC in zip(data["totDRene_cont"].values, data["AsymS"].values, data["AsymC"].values, data["TDC_TS11"].values, data["TDC_TC11"].values):
+        #if(asymS < 0.9 and asymS > -0.9 and asymC < 0.9 and asymC > -0.9):
+        #DReneAsymSprof.Fill(asymS, DRene/energy)
+        #DReneAsymCprof.Fill(asymC, DRene/energy)
+        if(tdcS > 512):
+            DReneStdcProf.Fill(tdcS, DRene/energy)
+        if(tdcC>512):
+            DReneCtdcProf.Fill(tdcC, DRene/energy)
+
+    for pmtS, pmtC, asymS, asymC, tdcS, tdcC  in zip(data["pmtS_cont"], data["pmtC_cont"], data["AsymS"], data["AsymC"], data["TDC_TS11"].values, data["TDC_TC11"].values):
+        #if(asymS < 0.9 and asymS > -0.9 and asymC < 0.9 and asymC > -0.9):
+        #SciAsymHist.Fill(asymS, pmtS)
+        #CerAsymHist.Fill(asymC, pmtC)
+        #SciAsymprof.Fill(asymS, pmtS/energy)
+        #CerAsymprof.Fill(asymC, pmtC/energy)
+        if(tdcS > 512):
+            ScieneStdcProf.Fill(tdcS, pmtS/energy)
+        if(tdcC>512):
+            CereneCtdcProf.Fill(tdcC, pmtC/energy)
+
+    # Fit TDC with a straight line
+    DReneStdcProf.Fit("pol1", "Q", "", 620, 675)
+    DReneCtdcProf.Fit("pol1", "Q", "", 620, 670)
+    ScieneStdcProf.Fit("pol1", "Q", "", 620, 675)
+    CereneCtdcProf.Fit("pol1", "Q", "", 620, 670)
+    # Get fitted function
+    fDReneStdc = DReneStdcProf.GetFunction("pol1")
+    fDReneCtdc = DReneCtdcProf.GetFunction("pol1")
+    fScieneStdc = ScieneStdcProf.GetFunction("pol1")
+    fCereneCtdc = CereneCtdcProf.GetFunction("pol1")
+
+    # Get fitted function
+    fDReneStdc.SetRange(600, 750)
+    fDReneCtdc.SetRange(600, 750)
+    fScieneStdc.SetRange(600, 750)
+    fCereneCtdc.SetRange(600, 750)
+
+
+    ROOT.gStyle.SetOptStat(0)
+    # Draw DR ene over S and C tdcs
+    cDReneTDC = ROOT.TCanvas("cDReneTdc{0}".format(energy),"DR energy Over TDCs ({0} GeV)".format(energy), 1400, 1200)
+    DReneStdcProf.SetMarkerColor(ROOT.kRed); DReneStdcProf.SetMarkerStyle(20); DReneStdcProf.SetLineColor(ROOT.kRed)
+    DReneCtdcProf.SetMarkerColor(ROOT.kBlue); DReneCtdcProf.SetMarkerStyle(20); DReneCtdcProf.SetLineColor(ROOT.kBlue)
+    fDReneStdc.SetLineColor(ROOT.kRed); fDReneCtdc.SetLineColor(ROOT.kBlue)
+    DReneStdcProf.Draw(); DReneCtdcProf.Draw("same"); fDReneStdc.Draw("same"); fDReneCtdc.Draw("same")
+    leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
+    leg.SetTextSize(0.018)   
+    #leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
+    leg.AddEntry(DReneStdcProf, "Profile over S PMTs")
+    leg.AddEntry(DReneCtdcProf, "Profile over C PMTs")
+    leg.Draw()     
+    cDReneTDC.SaveAs("DRenergyOverTDCT11_{0}GeV.png".format(energy))
+    ROOT.gStyle.SetOptStat(111)
+
+    # Draw DR ene over S and C tdcs
+    cPMTeneTDC = ROOT.TCanvas("cPMTeneTdc{0}".format(energy),"PMT energy Over TDCs ({0} GeV)".format(energy), 1400, 1200)
+    ScieneStdcProf.SetMarkerColor(ROOT.kRed); ScieneStdcProf.SetMarkerStyle(20); ScieneStdcProf.SetLineColor(ROOT.kRed)
+    CereneCtdcProf.SetMarkerColor(ROOT.kBlue); CereneCtdcProf.SetMarkerStyle(20); CereneCtdcProf.SetLineColor(ROOT.kBlue)
+    fScieneStdc.SetLineColor(ROOT.kRed); fCereneCtdc.SetLineColor(ROOT.kBlue)
+    ScieneStdcProf.Draw(); CereneCtdcProf.Draw("same"); fScieneStdc.Draw("same"); fCereneCtdc.Draw("same")
+    leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
+    leg.SetTextSize(0.018)   
+    #leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
+    leg.AddEntry(ScieneStdcProf, "Profile over S PMTs")
+    leg.AddEntry(CereneCtdcProf, "Profile over C PMTs")
+    leg.Draw()     
+    cPMTeneTDC.SaveAs("PMTenergyOverTDCT11_{0}GeV.png".format(energy))
+    ROOT.gStyle.SetOptStat(111)
+
+    return DReneStdcProf, DReneCtdcProf, ScieneStdcProf, CereneCtdcProf, fDReneStdc, fDReneCtdc, fScieneStdc, fCereneCtdc
+    #return data
 
 
 def DrawEnergyHist(dfs, energies, binning_S, binning_C, varname_S, varname_C):
@@ -273,12 +443,15 @@ def DrawFem(energy, eneS, eneC, labelS, labelC, title, outname):
 def main():
     print("Hello there")
     #runs = ["0714", "0715", "0716", "0717", "0718", "0721"]
-    runs = ["0968", "0967", "0966", "0965", "0963", "0962"]
+    #runs = ["0968", "0967", "0966", "0965", "0963", "0962"]
+    runs = ["0972", "0967", "0966", "0965", "0963", "0962"]
+    #runs = ["1000", "0967", "0966", "0965", "0963", "0962"]
 
     energies = [20, 40, 60, 80, 100, 120]
     exp_containment = [0.865, 0.87, 0.875, 0.88, 0.885, 0.89]
     #exp_containment = [0.875, 0.875, 0.875, 0.875, 0.875, 0.875]
     myCut = "(abs(XDWC2 - XDWC1) < 5) & (abs(YDWC2 - YDWC1)<5) & (totPMTSene>0) & (PShower<500) & (TailC<400) & (totLeakage<7000) & (MCounter<150)"
+    #myCut = "(TDC_TS00>600)"
 
     varProf = "YDWC2"
     cut_x_min = [-19.83, -16.74, -16.22, -15.95, -15.60, -16.12, -16.07, -15.50]
@@ -286,19 +459,20 @@ def main():
     cut_y_min = [-26.54, -25.80, -26.15, -26.15, -26.39, -25.63, -25.63, -26.03]
     cut_y_max = [13.38, 10.89, 9.72, 9.50, 9.86, 10.89, 10.54, 10.17]
 
-    # Declare Parametrization functions to fill in a first loop
-    #DReneAsymFitS10 = ROOT.TF1(); DReneAsymFitS20 = ROOT.TF1(); DReneAsymFitS30 = ROOT.TF1(); DReneAsymFitS40 = ROOT.TF1(); DReneAsymFitS60 = ROOT.TF1(); DReneAsymFitS80 = ROOT.TF1(); DReneAsymFitS100 = ROOT.TF1(); DReneAsymFitS120 = ROOT.TF1()
-    #DReneAsymFitC10 = ROOT.TF1(); DReneAsymFitC20 = ROOT.TF1(); DReneAsymFitC30 = ROOT.TF1(); DReneAsymFitC40 = ROOT.TF1(); DReneAsymFitC60 = ROOT.TF1(); DReneAsymFitC80 = ROOT.TF1(); DReneAsymFitC100 = ROOT.TF1(); DReneAsymFitC120 = ROOT.TF1()
-
-
+    # Asymmetry profiles
     DReneAsymFitSvec = []; DReneProfSvec = []
     DReneAsymFitCvec = []; DReneProfCvec = [] 
-
     SciAsymFitvec = []; SciAsymProfvec = []
     CerAsymFitvec = []; CerAsymProfvec = [] 
 
+    # TDC profiles
+    DReneTdcFitSvec = []; DReneProfSvec = []
+    DReneTdcFitCvec = []; DReneProfCvec = [] 
+    SciTdcFitvec = []; SciTdcProfvec = []
+    CerTdcFitvec = []; CerTdcProfvec = [] 
+
+
     # Store ntuples as pandas dataframes
-    #df10, df20, df30, df40, df60, df80, df100, df120
     dfs = []
 
     # array of dataframe with corrected energies
@@ -319,18 +493,40 @@ def main():
         #CurrentCut = myCut + " & (XDWC2 > {0}) & (XDWC2 < {1}) & (YDWC2 > {2}) & (YDWC2 < {3})".format(cut_x_min[index], cut_x_max[index], cut_y_min[index], cut_y_max[index]) 
         CurrentCut = myCut
 
-
         #df = GetDFparametrization(run, CurrentCut, filename, energy)
-        df, fDReneAsymS, fDReneAsymC, DReneAsymSprof, DReneAsymCprof,  fSciAsymProf, fCerAsymProf, SciAsymProf, CerAsymProf = GetDFparametrization(run, CurrentCut, filename, energy)
+        # read data and add asymmetry variable
+
+        df = GetDF(run, CurrentCut, filename, energy, cont)
+
+        #df, fDReneAsymS, fDReneAsymC, DReneAsymSprof, DReneAsymCprof,  fSciAsymProf, fCerAsymProf, SciAsymProf, CerAsymProf = GetDFparametrization(run, CurrentCut, filename, energy, cont)
+        df, fDReneAsymS, fDReneAsymC, DReneAsymSprof, DReneAsymCprof,  fSciAsymProf, fCerAsymProf, SciAsymProf, CerAsymProf = GetAsymProfiles(df, energy)
+
+        # clean events with TS11<100
+        df = df[df["TDC_TS00"]>600]
+        df = df[df["TDC_TS11"]>600]
+        df = df[df["TDC_TS15"]>600]
+        df = df[df["TDC_TC11"]>600]
+        df = df[df["TDC_TC15"]>600]
+        df = df[df["TDC_TC00"]>600]
+
+        # plot TDC profiles and return
+        DReneStdcProf, DReneCtdcProf, ScieneStdcProf, CereneCtdcProf, fDReneStdc, fDReneCtdc, fScieneStdc, fCereneCtdc = GetTDCProfiles(df, energy)
+
 
 
         dfs.append(df)
         DrawFem(energy, df["totPMTSene"], df["totPMTCene"], "totPMTSene", "totPMTCene", "Electromagnetic Fraction, raw variables", "HistFemPMT")
-        #DrawFem(energy, df["totDRene"], df["totPMTCene"], "DRene", "totPMTCene", "Electromagnetic Fraction, raw variables", "HistFemDR")
-
         
+        # append DRene profile and fits over S or C asymmetry
         DReneAsymFitSvec.append(fDReneAsymS); DReneAsymFitCvec.append(fDReneAsymC);  DReneProfSvec.append(DReneAsymSprof); DReneProfCvec.append(DReneAsymCprof)
+        # append S/C energy profile and fits over S/C asymmetry
         SciAsymFitvec.append(fSciAsymProf); CerAsymFitvec.append(fCerAsymProf); SciAsymProfvec.append(SciAsymProf); CerAsymProfvec.append(CerAsymProf)
+        # append DRene profile and fits over S and C tdcs
+        DReneTdcFitSvec.append(fDReneStdc); DReneTdcFitCvec.append(fDReneCtdc);  DReneProfSvec.append(DReneStdcProf); DReneProfCvec.append(DReneCtdcProf)
+        # append S/C energy over S/C tdcs
+        SciTdcFitvec.append(fScieneStdc); CerTdcFitvec.append(fCereneCtdc); SciTdcProfvec.append(ScieneStdcProf); CerTdcProfvec.append(CereneCtdcProf)
+
+
 
         ROOT.gStyle.SetOptStat(0)
         ctest = ROOT.TCanvas("cEneProfAsymmetry{0}".format(energy), "cEneProfAsymmetry{0}".format(energy), 1400, 1200)
@@ -361,14 +557,23 @@ def main():
     #fDRS80  = np.vectorize(DReneAsymFitS[3].Eval); fDRC80  = np.vectorize(DReneAsymFitC[3].Eval)
     #fDRS100  = np.vectorize(DReneAsymFitS[4].Eval); fDRC100  = np.vectorize(DReneAsymFitC[4].Eval)
     #fDRS120  = np.vectorize(DReneAsymFitS[5].Eval); fDRC120  = np.vectorize(DReneAsymFitC[5].Eval)
+ 
+    
    
     fSci40  = np.vectorize(SciAsymFitvec[1].Eval); fCer40  = np.vectorize(CerAsymFitvec[1].Eval)
+
+    fDReneStdc40  = np.vectorize(DReneTdcFitSvec[2].Eval); fDReneCtdc40  = np.vectorize(DReneTdcFitCvec[2].Eval)
+
 
     binning_S = [0, 30, 60, 90]
     binning_C = [0, 30, 60, 90]
     DrawEnergyHist(dfs, energies, binning_S, binning_C, "totPMTSene", "totPMTCene")
 
+    
+    # Read PMT noise
     noiseS, noiseC = GetPMTnoise()
+
+
     ROOT.gStyle.SetOptStat(1)
         
     for index, (energy, cont) in enumerate(zip(energies, exp_containment)):
@@ -401,12 +606,21 @@ def main():
         # Associate a parametrisation to each energy point
         # A parametrisation at each energy is extracted, it is possible to use only one for all
         # or one per bin
-        choices_DR = [
+        choices_DR_asym = [
             data["totDRene"] / fDRS40(data["AsymS"])/cont,
             data["totDRene"] / fDRS40(data["AsymS"])/cont,
             data["totDRene"] / fDRS40(data["AsymS"])/cont,
             data["totDRene"] / fDRS40(data["AsymS"])/cont
         ]
+
+        choices_DR_tdc = [
+            data["totDRene"] / fDReneStdc40(data["TDC_TS11"])/cont,
+            data["totDRene"] / fDReneStdc40(data["TDC_TS11"])/cont,
+            data["totDRene"] / fDReneStdc40(data["TDC_TS11"])/cont,
+            data["totDRene"] / fDReneStdc40(data["TDC_TS11"])/cont
+        ]
+
+
         #choices_C = [
         #    data["totPMTCene"] / fC60(data["AsymC"]),
         #    data["totPMTCene"] / fC60(data["AsymC"]),
@@ -414,67 +628,111 @@ def main():
         #    data["totPMTCene"] / fC60(data["AsymC"])
         #]
 
-
         # Use np.select to apply the conditions
-        data["energyDR_AsymCorrected"] = np.select(conditions_DR, choices_DR, default=data["totDRene_cont"])
+        data["energyDR_AsymCorrected"] = np.select(conditions_DR, choices_DR_asym, default=data["totDRene_cont"])
         data["energyS_AsymCorrected"] = data["totPMTSene"]/fSci40(data["AsymS"])/cont
         data["energyC_AsymCorrected"] = data["totPMTCene"]/fCer40(data["AsymC"])/cont
         #data["energyC"] = np.select(conditions_C, choices_C, default=data["totPMTCene"])
 
         # Evaluate function on Asym variable and use it to correct energy
-        #data["energyS"] = data["totPMTSene"]/fS20(data["AsymS"])
-        #data["energyC"] = data["totPMTCene"]/fC20(data["AsymC"])
         DrawFem(energy, data["energyS_AsymCorrected"], data["energyC_AsymCorrected"], "S (corrected)", "C (corrected)", "Electromagnetic Fraction, Corrected for asymmetry", "HistFemCorrected")
 
+        # Use np.select to apply the conditions
+        data["energyDR_TdcCorrected"] = np.select(conditions_DR, choices_DR_tdc, default=data["totDRene_cont"])
+        #data["energyS_TdcCorrected"] = data["totPMTSene"]/fSci40(data["AsymS"])/cont
+        #data["energyC_TdcCorrected"] = data["totPMTCene"]/fCer40(data["AsymC"])/cont
+
+        print(data["totDRene"])
+        print(data["TDC_TS11"])
+        print("Corrected energies:")
+        print(data["energyDR_TdcCorrected"] )
 
 
-        # Fill histograms with corrected energy values
-        #HistScorrected = ROOT.TH1D("HistScorrected_{0}GeV".format(energy), "S Energy (corrected) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        #HistSraw = ROOT.TH1D("HistSraw_{0}GeV".format(energy), "totPMTSene {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        #HistScorrected_Asymcut = ROOT.TH1D("HistScorrected_AsymCut_{0}GeV".format(energy), "S Energy (corrected, Asym cut) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-
-        # Fill histograms with corrected energy values
-        #HistCcorrected = ROOT.TH1D("HistCcorrected_{0}GeV".format(energy), "C Energy (corrected) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        #HistCraw = ROOT.TH1D("HistCraw_{0}GeV".format(energy), "totPMTCene {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-        #HistCcorrected_Asymcut = ROOT.TH1D("HistCcorrected_AsymCut_{0}GeV".format(energy), "C Energy (corrected, Asym cut) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
-
-        # Fill histograms with corrected energy values
-        #HistCombCorrected = ROOT.TH1D("HistCombcorrected_{0}GeV".format(energy), "Combined Energy (corrected) {0}GeV; E [GeV]; Counts".format(energy), 100, energy-0.4*energy, energy+0.4*energy)
 
 
-        #for eneS, pmtS, eneC, pmtC in zip(data["energyS"].values, data["totPMTSene"].values, data["energyC"].values, data["totPMTCene"].values):
-        #    HistScorrected.Fill(eneS)
-        #    HistSraw.Fill(pmtS)
-        #    HistCcorrected.Fill(eneC)
-        #    HistCraw.Fill(pmtC)
+        ########### Colz Plots  ###############
+        # colz plot (over asymmetry), before any correction
+        myOutfile = "ScieneColz_NoAsymCorrection_{0}GeV.png".format(energy); labelPlot= "S energy, before asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymS"]; varY = data["pmtS_cont"]; title = "cColzAsymS"; labelX = "TS24-TS21 / TS24+TS21"; labelY = "totPMTSene/containment [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # colz plot, after correction with asymmetry
+        myOutfile = "ScieneColz_AsymCorrection_{0}GeV.png".format(energy); labelPlot= "S energy, Asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymS"]; varY = data["energyS_AsymCorrected"]; title = "cColzAsymC"; labelX = "TS24-TS21 / TS24+TS21"; labelY = "totPMTSene/containment [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # colz plot (over asymmetry), before any correction
+        myOutfile = "CereneColz_NoAsymCorrection_{0}GeV.png".format(energy); labelPlot= "C energy, before asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymC"]; varY = data["pmtS_cont"]; title = "cColzAsymS"; labelX = "TC24-TC21 / TC24+TC21"; labelY = "totPMTCene/containment [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # colz plot, after correction with asymmetry
+        myOutfile = "CereneColz_AsymCorrection_{0}GeV.png".format(energy); labelPlot= "C energy, Asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymC"]; varY = data["energyS_AsymCorrected"]; title = "cColzAsymC"; labelX = "TC24-TC21 / TC24+TC21"; labelY = "totPMTCene/containment [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
 
 
-        #dfCorrected_array.append(data)
+        # colz plot (over asymmetry), before any correction
+        myOutfile = "DReneColz_NoAsymCorrection_{0}GeV.png".format(energy); labelPlot= "DR energy, before asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymS"]; varY = data["totDRene_cont"]; title = "cColzAsymS"; labelX = "TS24-TS21 / TS24+TS21"; labelY = "Reco E_DR [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # colz plot, after correction with asymmetry
+        myOutfile = "DReneColz_AsymCorrection_{0}GeV.png".format(energy); labelPlot= "DR energy, Asymmetry correction {0} GeV".format(energy)
+        varX = data["AsymS"]; varY = data["energyDR_AsymCorrected"]; title = "cColzAsymS"; labelX = "TS24-TS21 / TS24+TS21"; labelY = "Reco E_DR [GeV]"
+        nbinX = 50; xmin = -1.4; xmax = 1.4; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+
+       # colz plot (over TDC 11), before any correction
+        myOutfile = "DReneColz_NoTdcCorrection_{0}GeV.png".format(energy); labelPlot= "DR energy, before Tdc TS11 correction {0} GeV".format(energy)
+        varX = data["TDC_TS11"]; varY = data["totDRene_cont"]; title = "cColzTdcTS11"; labelX = "TS11 Tdc"; labelY = "Reco E_DR [GeV]"
+        nbinX = 50; xmin = 600; xmax = 700; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+
+        # colz plot, after correction with TDCs
+        myOutfile = "DReneColz_TdcCorrection_{0}GeV.png".format(energy); labelPlot= "DR energy, Tdc TS11 correction {0} GeV".format(energy)
+        varX = data["TDC_TS11"]; varY = data["energyDR_TdcCorrected"]; title = "cColzTdcTS11"; labelX = "TS11 Tdc"; labelY = "Reco E_DR [GeV]"
+        nbinX = 50; xmin = 600; xmax = 700; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # colz plot, energy corrected with asymmetry, over TDCs
+        myOutfile = "DReneColz_AsymCorrectedOverTdc_{0}GeV.png".format(energy); labelPlot= "DRene, asymmetry correction over Tdc TS11 {0} GeV".format(energy)
+        varX = data["TDC_TS11"]; varY = data["energyDR_AsymCorrected"]; title = "cColzTdcTS11"; labelX = "TS11 Tdc"; labelY = "Reco E_DR [GeV]"
+        nbinX = 50; xmin = 600; xmax = 700; nbinY = 50; ymin = 0.; ymax = energy*1.7
+        DrawColzPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax, nbinY, ymin, ymax)
+
+        # Profile plot, energy corrected with asymmetry, over TDCs
+        myOutfile = "DReneProf_AsymCorrectedOverTdc_{0}GeV.png".format(energy); labelPlot= "DRene, asymmetry correction over Tdc TS11 {0} GeV".format(energy)
+        varX = data["TDC_TS11"]; varY = data["energyDR_AsymCorrected"]/energy; title = "cProfTdcTS11"; labelX = "TS11 Tdc"; labelY = "Reco E_DR / E_beam"
+        nbinX = 50; xmin = 600; xmax = 700; nbinY = 50; ymin = energy*0.5; ymax = energy*1.5
+        DrawProfPlot(myOutfile, title, varX, varY, labelPlot, labelX, labelY, nbinX, xmin, xmax)
+
+
+
+
+
         # filter tree using only events with an asymmetry within range
-        AsymCut = 0.5
+        AsymCut = 0.9
         #data = data[ (np.abs(data["AsymS"]<AsymCut) ) & (np.abs(data["AsymC"]<AsymCut) ) ]
         #data_filtered = data[ (np.abs(data["AsymS"])<AsymCut ) & (np.abs(data["AsymC"])<AsymCut ) & (np.abs(data["BaryS"])<4) & (np.abs(data["BaryC"])<4) ]
         data_filtered = data[ (np.abs(data["AsymS"])<AsymCut ) & (np.abs(data["AsymC"])<AsymCut ) ]
 
-        #for eneS, eneC in zip(data_filtered["energyS"].values, data_filtered["energyC"].values):
-        #    HistScorrected_Asymcut.Fill(eneS)
-        #    HistCcorrected_Asymcut.Fill(eneC)
-        #    HistCombCorrected.Fill( (eneS+eneC)/2 )
-
-
-
-        #for index, energy in enumerate(energies):
-        #data = dfs[index]
-
 
         # Fill histograms with corrected energy values
         HistScorrected = ROOT.TH1D("HistScorrected_{0}GeV".format(energy), "totPMTSene/avg_containment ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
-        HistSraw = ROOT.TH1D("HistSraw_{0}GeV".format(energy), "totPMTSene ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
+        #HistScorrected = ROOT.TH1D("HistSraw_{0}GeV".format(energy), "totPMTSene ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
         HistScorrected_Asymcut = ROOT.TH1D("HistSAsymcorrected_{0}GeV".format(energy), "totPMTSene/avg_containment (Corrected, {0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
 
         # Fill histograms with corrected energy values
         HistCcorrected = ROOT.TH1D("HistCcorrected_{0}GeV".format(energy), "totPMTCene/avg_containment ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
-        HistCraw = ROOT.TH1D("HistCraw_{0}GeV".format(energy), "totPMTCene ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
+        #HistCcorrected = ROOT.TH1D("HistCraw_{0}GeV".format(energy), "totPMTCene ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
         HistCcorrected_Asymcut = ROOT.TH1D("HistCAsymcorrected_{0}GeV".format(energy), "totPMTCene/avg_containment (Corrected, {0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
 
         # Fill histograms with corrected energy values
@@ -482,17 +740,21 @@ def main():
         HistComb = ROOT.TH1D("HistComb_{0}GeV".format(energy), r"(S-#chi C)/(1-#chi) ({0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
         HistCombCorrected_Asymcut = ROOT.TH1D("HistDRene_AsymCorrected_{0}GeV".format(energy), r"(S-#chi C)/(1-#chi)/avg_containment (Corrected, {0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
 
+        # corrected energy for TDCs
+        HistCombCorrected_tdc = ROOT.TH1D("HistDRene_TdcCorrected_{0}GeV".format(energy), r"(S-#chi C)/(1-#chi)/avg_containment (CorrectedTDC, {0}GeV); E [GeV]; Counts".format(energy), 100, energy-0.7*energy, energy+0.7*energy)
 
-        for pmtS, pmtC, eneDR_cont, eneDR_corrected in zip(data["pmtS_cont"].values, data["pmtC_cont"].values, data["totDRene_cont"].values, data_filtered["energyDR_AsymCorrected"]):
-            HistSraw.Fill(pmtS)
-            HistCraw.Fill(pmtC)
+
+        for pmtS, pmtC, eneDR_cont, eneDR_corrected in zip(data["pmtS_cont"].values, data["pmtC_cont"].values, data["totDRene_cont"].values, data["energyDR_TdcCorrected"]):
+            HistScorrected.Fill(pmtS)
+            HistCcorrected.Fill(pmtC)
             HistComb.Fill(eneDR_cont)
             HistCombCorrected.Fill(eneDR_cont)
-            HistCombCorrected_Asymcut.Fill(eneDR_corrected)
+            HistCombCorrected_tdc.Fill(eneDR_corrected)
 
-        for eneS, eneC in zip(data_filtered["energyS_AsymCorrected"], data_filtered["energyC_AsymCorrected"]):
+        for eneS, eneC, eneDR_corrected in zip(data_filtered["energyS_AsymCorrected"], data_filtered["energyC_AsymCorrected"], data_filtered["energyDR_AsymCorrected"]):
             HistScorrected_Asymcut.Fill(eneS)
             HistCcorrected_Asymcut.Fill(eneC)
+            HistCombCorrected_Asymcut.Fill(eneDR_corrected)
 
 
         # Show reco energy Vs Asymmetry
@@ -511,68 +773,106 @@ def main():
 
 
             
-
-        HistSraw.Fit("gaus", "Q")
-        totPMTSeneFit = HistSraw.GetFunction("gaus")
+        # Fit S energy before and after asymmetry correction
+        HistScorrected.Fit("gaus", "Q")
+        ftotPMTSeneFit = HistScorrected.GetFunction("gaus") 
         HistScorrected_Asymcut.Fit("gaus", "Q")
-        SeneFit = HistScorrected_Asymcut.GetFunction("gaus")
-
-        HistCraw.Fit("gaus", "Q")
+        fSeneAsymFit = HistScorrected_Asymcut.GetFunction("gaus")
+        # Fit C energy before and after asymmetry correction
+        HistCcorrected.Fit("gaus", "Q")
+        ftotPMTCeneFit = HistCcorrected.GetFunction("gaus")
         HistCcorrected_Asymcut.Fit("gaus", "Q")
-        totPMTCeneFit = HistCraw.GetFunction("gaus")
-        CeneFit = HistCcorrected_Asymcut.GetFunction("gaus")
+        fCeneAsymFit = HistCcorrected_Asymcut.GetFunction("gaus")
 
         HistComb.Fit("gaus","Q")
-        DReneFit = HistComb.GetFunction("gaus")
-
+        fDReneFit = HistComb.GetFunction("gaus")
         HistCombCorrected.Fit("gaus","Q")
-        DReneFitCorrected = HistCombCorrected.GetFunction("gaus")
+        fDReneFitCorrected = HistCombCorrected.GetFunction("gaus")
 
         HistCombCorrected_Asymcut.Fit("gaus","Q")
-        DReneFitCorrected_Asymcut = HistCombCorrected_Asymcut.GetFunction("gaus")
+        fDReneFitCorrected_Asymcut = HistCombCorrected_Asymcut.GetFunction("gaus")
+
+        HistCombCorrected_tdc.Fit("gaus","")
+        fDReneFitCorrected_tdc = HistCombCorrected_tdc.GetFunction("gaus")
 
 
         ROOT.gStyle.SetOptFit(111)
         # refit within -1.5 and +3 sigma
-        HistSraw.Fit("gaus", "Q", "", totPMTSeneFit.GetParameter(1)-1.5*totPMTSeneFit.GetParameter(2), totPMTSeneFit.GetParameter(1)+1.5*totPMTSeneFit.GetParameter(2)) 
-        HistCraw.Fit("gaus", "Q", "", totPMTCeneFit.GetParameter(1)-1.5*totPMTCeneFit.GetParameter(2), totPMTCeneFit.GetParameter(1)+1.5*totPMTCeneFit.GetParameter(2)) 
-        HistComb.Fit("gaus", "Q", "", DReneFit.GetParameter(1)-1.5*DReneFit.GetParameter(2), DReneFit.GetParameter(1)+1.5*DReneFit.GetParameter(2)) 
-        HistCombCorrected.Fit("gaus", "Q", "", DReneFitCorrected.GetParameter(1)-1.5*DReneFitCorrected.GetParameter(2), DReneFitCorrected.GetParameter(1)+1.5*DReneFitCorrected.GetParameter(2)) 
-        HistCombCorrected_Asymcut.Fit("gaus", "Q", "", DReneFitCorrected_Asymcut.GetParameter(1)-1.5*DReneFitCorrected_Asymcut.GetParameter(2), DReneFitCorrected_Asymcut.GetParameter(1)+1.5*DReneFitCorrected_Asymcut.GetParameter(2)) 
-        HistScorrected_Asymcut.Fit("gaus", "Q", "", SeneFit.GetParameter(1)-1.5*SeneFit.GetParameter(2), SeneFit.GetParameter(1)+1.5*SeneFit.GetParameter(2)) 
-        HistCcorrected_Asymcut.Fit("gaus", "Q", "", CeneFit.GetParameter(1)-1.5*CeneFit.GetParameter(2), CeneFit.GetParameter(1)+1.5*CeneFit.GetParameter(2)) 
+        HistScorrected.Fit("gaus", "Q", "", ftotPMTSeneFit.GetParameter(1)-1.5*ftotPMTSeneFit.GetParameter(2), ftotPMTSeneFit.GetParameter(1)+1.5*ftotPMTSeneFit.GetParameter(2)) 
+        HistCcorrected.Fit("gaus", "Q", "", ftotPMTCeneFit.GetParameter(1)-1.5*ftotPMTCeneFit.GetParameter(2), ftotPMTCeneFit.GetParameter(1)+1.5*ftotPMTCeneFit.GetParameter(2)) 
+        HistComb.Fit("gaus", "Q", "", fDReneFit.GetParameter(1)-1.5*fDReneFit.GetParameter(2), fDReneFit.GetParameter(1)+1.5*fDReneFit.GetParameter(2)) 
+        HistCombCorrected.Fit("gaus", "Q", "", fDReneFitCorrected.GetParameter(1)-1.5*fDReneFitCorrected.GetParameter(2), fDReneFitCorrected.GetParameter(1)+1.5*fDReneFitCorrected.GetParameter(2)) 
+        HistCombCorrected_Asymcut.Fit("gaus", "Q", "", fDReneFitCorrected_Asymcut.GetParameter(1)-1.5*fDReneFitCorrected_Asymcut.GetParameter(2), fDReneFitCorrected_Asymcut.GetParameter(1)+1.5*fDReneFitCorrected_Asymcut.GetParameter(2)) 
+        HistScorrected_Asymcut.Fit("gaus", "Q", "", fSeneAsymFit.GetParameter(1)-1.5*fSeneAsymFit.GetParameter(2), fSeneAsymFit.GetParameter(1)+1.5*fSeneAsymFit.GetParameter(2)) 
+        HistCcorrected_Asymcut.Fit("gaus", "Q", "", fCeneAsymFit.GetParameter(1)-1.5*fCeneAsymFit.GetParameter(2), fCeneAsymFit.GetParameter(1)+1.5*fCeneAsymFit.GetParameter(2)) 
+
+        HistCombCorrected_tdc.Fit("gaus", "Q", "", fDReneFitCorrected_tdc.GetParameter(1)-1.5*fDReneFitCorrected_tdc.GetParameter(2), fDReneFitCorrected_tdc.GetParameter(1)+1.5*fDReneFitCorrected_tdc.GetParameter(2)) 
 
 
-
+        # Plot Sci Energy
         scihist = ROOT.TCanvas("cSciEnergy{0}".format(energy), "cSciEnergy{0}".format(energy), 1400, 1200)
-        HistSraw.SetLineColor(ROOT.kRed); HistScorrected_Asymcut.SetLineColor(ROOT.kRed+2)
-        HistSraw.Draw()
+        HistScorrected.SetLineColor(ROOT.kBlack); HistScorrected_Asymcut.SetLineColor(ROOT.kRed); HistScorrected.SetLineWidth(2); HistScorrected_Asymcut.SetLineWidth(2)
+        HistScorrected_Asymcut.GetFunction("gaus").SetLineColor(ROOT.kRed); HistScorrected_Asymcut.GetFunction("gaus").SetLineStyle(2); HistScorrected.GetFunction("gaus").SetLineColor(ROOT.kBlack)
+        maximum = max(HistScorrected.GetMaximum(), HistScorrected_Asymcut.GetMaximum())
+        HistScorrected.SetMaximum(maximum*1.2)
+        HistScorrected.Draw()
         HistScorrected_Asymcut.Draw("same")
+        legend = ROOT.TLegend(0.15, 0.8, 0.4, 0.9); legend.AddEntry(HistScorrected, "SPMT/containment", "l"); legend.AddEntry(HistScorrected_Asymcut, "Asym Correction", "l"); legend.SetTextSize(0.013); legend.Draw("same")
         scihist.SaveAs("Scienehist{0}.png".format(energy))
+        
+        # Plot Cer Energy
         cerhist = ROOT.TCanvas("cCerEnergy{0}".format(energy), "cCerEnergy{0}".format(energy), 1400, 1200)
-        HistCraw.SetLineColor(ROOT.kBlue); HistCcorrected_Asymcut.SetLineColor(ROOT.kBlue+2)
-        HistCraw.Draw()
+        HistCcorrected.SetLineColor(ROOT.kAzure+1); HistCcorrected_Asymcut.SetLineColor(ROOT.kBlue+1); HistCcorrected.SetLineWidth(2); HistCcorrected_Asymcut.SetLineWidth(2)
+        HistCcorrected_Asymcut.GetFunction("gaus").SetLineColor(ROOT.kBlue); HistCcorrected_Asymcut.GetFunction("gaus").SetLineStyle(2); HistCcorrected.GetFunction("gaus").SetLineColor(ROOT.kBlack)
+        maximum = max(HistCcorrected.GetMaximum(), HistCcorrected_Asymcut.GetMaximum())
+        HistCcorrected.SetMaximum(maximum*1.2)
+        HistCcorrected.Draw()
         HistCcorrected_Asymcut.Draw("same")
+        legend = ROOT.TLegend(0.15, 0.8, 0.4, 0.9); legend.AddEntry(HistCcorrected, "CPMT/containment", "l"); legend.AddEntry(HistCcorrected_Asymcut, "Asym Correction", "l"); legend.SetTextSize(0.013); legend.Draw("same")
         cerhist.SaveAs("Cerenehist{0}.png".format(energy))
-        combhist = ROOT.TCanvas("cCombEnergy{0}".format(energy), "cCombEnergy{0}".format(energy), 1400, 1200)
-        HistComb.Draw()
-        combhist.SaveAs("Combenehist{0}.png".format(energy))
-        combcorrhist = ROOT.TCanvas("cCombEnergyCorrected{0}".format(energy), "cCombEnergyCorrected{0}".format(energy), 1400, 1200)
-        HistCombCorrected.Draw()
-        combcorrhist.SaveAs("DRcorrectedenehist{0}.png".format(energy))
+        
+        # Plot Combined Energy
+        #combhist = ROOT.TCanvas("cCombEnergy{0}".format(energy), "cCombEnergy{0}".format(energy), 1400, 1200)
+        #HistComb.Draw()
+        #combhist.SaveAs("Combenehist{0}.png".format(energy))
+        #combcorrhist = ROOT.TCanvas("cCombEnergyCorrected{0}".format(energy), "cCombEnergyCorrected{0}".format(energy), 1400, 1200)
+        #HistComb.SetLineColor(ROOT.kRed); HistCombCorrected.SetLineColor(ROOT.kRed+2); HistCombraw.SetLineWidth(2); HistCombcorrected_Asymcut.SetLineWidth(2)
+        #HistComb.Draw()
+        #HistCombCorrected.Draw()
+        #combcorrhist.SaveAs("DRcorrectedenehist{0}.png".format(energy))
+        
+        # Plot DR energy with asymmetry correction
         combcorrhist_Asymcut = ROOT.TCanvas("cCombEnergyCorrectedAsymmetry{0}".format(energy), "cCombEnergyCorrectedAsymmetry{0}".format(energy), 1400, 1200)
-        HistCombCorrected_Asymcut.Draw()
+        HistCombCorrected.SetLineColor(ROOT.kBlack); HistCombCorrected_Asymcut.SetLineColor(ROOT.kGreen+1); HistCombCorrected.SetLineWidth(2); HistCombCorrected_Asymcut.SetLineWidth(2)
+        HistCombCorrected_Asymcut.GetFunction("gaus").SetLineColor(ROOT.kBlue); HistCombCorrected_Asymcut.GetFunction("gaus").SetLineStyle(2); HistCombCorrected.GetFunction("gaus").SetLineColor(ROOT.kBlack)
+        maximum = max(HistCombCorrected.GetMaximum(), HistCombCorrected_Asymcut.GetMaximum())
+        HistCombCorrected.SetMaximum(maximum*1.2)
+        HistCombCorrected.Draw()
+        HistCombCorrected_Asymcut.Draw("same")
+        legend = ROOT.TLegend(0.15, 0.8, 0.4, 0.9); legend.AddEntry(HistCombCorrected, "Raw PMT (DR), containment correction", "l"); legend.AddEntry(HistCombCorrected_Asymcut, "with asym Correction", "l"); legend.SetTextSize(0.013); legend.Draw("same")
         combcorrhist_Asymcut.SaveAs("DRcorrectedAsymmetryenehist{0}.png".format(energy))
+        
+        # Plot DR energy with TDC correction
+        combcorrhist_tdc = ROOT.TCanvas("cCombEnergyCorrectedTdc{0}".format(energy), "cCombEnergyCorrectedTdc{0}".format(energy), 1400, 1200)
+        HistCombCorrected.SetLineColor(ROOT.kBlack); HistCombCorrected_tdc.SetLineColor(ROOT.kGreen+2); HistCombCorrected.SetLineWidth(2); HistCombCorrected_tdc.SetLineWidth(2)
+        HistCombCorrected_tdc.GetFunction("gaus").SetLineColor(ROOT.kGreen+2); HistCombCorrected_tdc.GetFunction("gaus").SetLineStyle(2); HistCombCorrected.GetFunction("gaus").SetLineColor(ROOT.kBlack)
+        maximum = max(HistCombCorrected.GetMaximum(), HistCombCorrected_tdc.GetMaximum())
+        HistCombCorrected.SetMaximum(maximum*1.2)     
+        HistCombCorrected.Draw()
+        HistCombCorrected_tdc.Draw("same")
+        legend = ROOT.TLegend(0.15, 0.8, 0.4, 0.9); legend.AddEntry(HistCombCorrected, "Raw PMT (DR), containment correction", "l"); legend.AddEntry(HistCombCorrected_Asymcut, "with tdc Correction", "l"); legend.SetTextSize(0.013); legend.Draw("same")
+        combcorrhist_tdc.SaveAs("DRcorrectedTdcenehist{0}.png".format(energy))
 
 
     
-        #BestFitS = HistSraw.GetFunction("gaus")
-        #BestFitC = HistCraw.GetFunction("gaus")
+        #BestFitS = HistScorrected.GetFunction("gaus")
+        #BestFitC = HistCcorrected.GetFunction("gaus")
         BestFitS = HistScorrected_Asymcut.GetFunction("gaus")
         BestFitC = HistCcorrected_Asymcut.GetFunction("gaus")
         BestFitComb = HistComb.GetFunction("gaus")
         BestFitCombCorrected = HistCombCorrected.GetFunction("gaus")
         BestFitCombCorrected_Asymcut = HistCombCorrected_Asymcut.GetFunction("gaus")
+        BestFitCombCorrected_tdc = HistCombCorrected_tdc.GetFunction("gaus")
 
 
         MeanVec_S.append(BestFitS.GetParameter(1)); MeanErrVec_S.append(BestFitS.GetParError(1)); RmsVec_S.append(BestFitS.GetParameter(2)); RmsErrVec_S.append(BestFitS.GetParError(2))
@@ -580,8 +880,12 @@ def main():
         #MeanVec_Comb.append(BestFitCombCorrected.GetParameter(1)); MeanErrVec_Comb.append(BestFitCombCorrected.GetParError(1)); RmsVec_Comb.append(BestFitCombCorrected.GetParameter(2)); RmsErrVec_Comb.append(BestFitCombCorrected.GetParError(2))
         #MeanVec_Comb.append(BestFitComb.GetParameter(1)); MeanErrVec_Comb.append(BestFitComb.GetParError(1)); RmsVec_Comb.append(BestFitComb.GetParameter(2)); RmsErrVec_Comb.append(BestFitComb.GetParError(2))
         #MeanVec_Comb_Asym.append(BestFitCombCorrected_Asymcut.GetParameter(1)); MeanErrVec_Comb_Asym.append(BestFitCombCorrected_Asymcut.GetParError(1)); RmsVec_Comb_Asym.append(BestFitCombCorrected_Asymcut.GetParameter(2)); RmsErrVec_Comb_Asym.append(BestFitCombCorrected_Asymcut.GetParError(2))
+        
         # Only append DR energy to be plotted
-        MeanVec_Comb.append(BestFitCombCorrected_Asymcut.GetParameter(1)); MeanErrVec_Comb.append(BestFitCombCorrected_Asymcut.GetParError(1)); RmsVec_Comb.append(BestFitCombCorrected_Asymcut.GetParameter(2)); RmsErrVec_Comb.append(BestFitCombCorrected_Asymcut.GetParError(2))
+        #MeanVec_Comb.append(BestFitCombCorrected_Asymcut.GetParameter(1)); MeanErrVec_Comb.append(BestFitCombCorrected_Asymcut.GetParError(1)); RmsVec_Comb.append(BestFitCombCorrected_Asymcut.GetParameter(2)); RmsErrVec_Comb.append(BestFitCombCorrected_Asymcut.GetParError(2))
+
+        # 
+        MeanVec_Comb.append(BestFitCombCorrected_tdc.GetParameter(1)); MeanErrVec_Comb.append(BestFitCombCorrected_tdc.GetParError(1)); RmsVec_Comb.append(BestFitCombCorrected_tdc.GetParameter(2)); RmsErrVec_Comb.append(BestFitCombCorrected_tdc.GetParError(2))
 
 
         # Show effect of correction
@@ -599,8 +903,11 @@ def main():
         integral = HistCombCorrected_Asymcut.Integral()
         scale_factor = 1/integral
         HistCombCorrected_Asymcut.Scale(scale_factor)
+        integral = HistCombCorrected_tdc.Integral()
+        scale_factor = 1/integral
+        HistCombCorrected_tdc.Scale(scale_factor)
         # Get Maximum
-        maximum = max(HistComb.GetMaximum(), HistCombCorrected.GetMaximum(), HistCombCorrected_Asymcut.GetMaximum())
+        maximum = max(HistComb.GetMaximum(), HistCombCorrected.GetMaximum(), HistCombCorrected_Asymcut.GetMaximum(), HistCombCorrected_tdc.GetMaximum())
         # Plot raw DR energy
         HistComb.SetLineColor(ROOT.kBlue+1); HistComb.SetLineWidth(2)
         HistComb.SetLineWidth(2)     
@@ -618,11 +925,18 @@ def main():
         HistCombCorrected_Asymcut.SetLineWidth(2)
         HistCombCorrected_Asymcut.GetYaxis().SetTitle("Normalised Counts")     
         HistCombCorrected_Asymcut.Draw("same hist")
+        # Plot DR energy / average containment, with tdc correction -> attenuation
+        HistCombCorrected_tdc.SetLineColor(ROOT.kBlack); HistCombCorrected_Asymcut.SetLineWidth(2)
+        HistCombCorrected_tdc.SetLineWidth(2)
+        HistCombCorrected_tdc.GetYaxis().SetTitle("Normalised Counts")     
+        HistCombCorrected_tdc.Draw("same hist")
+
         leg = ROOT.TLegend(0.53, 0.75, 0.97, 0.92)
         leg.SetTextSize(0.018)   
         #leg.AddEntry(HistComb, r"(S-#chi C)/(1-#chi)")
         leg.AddEntry(HistCombCorrected, r"(S-#chi C)/(1-#chi)/avg_cont")
         leg.AddEntry(HistCombCorrected_Asymcut, r"(S-#chi C)/(1-#chi)/avg_cont (Corrected for Asymmetry)")
+        leg.AddEntry(HistCombCorrected_tdc, r"(S-#chi C)/(1-#chi)/avg_cont (Corrected for Timing)")
         leg.Draw() 
         cEnergyPlot.SaveAs("EnergyComparison_{0}GeV.png".format(energy))
         ROOT.gStyle.SetOptStat(1)
