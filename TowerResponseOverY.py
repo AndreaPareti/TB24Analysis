@@ -49,6 +49,11 @@ def main():
     towname = []
     towadcpeak = []
     yMaxHitTow = []
+    varProf = "YDWC2"
+    cut_x_min = [-19.83, -16.74, -16.22, -15.95, -15.60, -16.12, -16.07, -15.50]
+    cut_x_max = [23.90, 22.19, 23.27, 23.44, 24.27, 23.79, 23.63, 24.12]
+    cut_y_min = [-26.54, -25.80, -26.15, -26.15, -26.39, -25.63, -25.63, -26.03]
+    cut_y_max = [13.38, 10.89, 9.72, 9.50, 9.86, 10.89, 10.54, 10.17]
 
         
     for col in cols:    
@@ -59,8 +64,19 @@ def main():
             rootfile = INPUTDIR+"physics_sps2024_run0"+str(run)+".root"
             print(rootfile)
 
-            cut = "abs(YDWC2-YDWC1)<5 && abs(XDWC2-XDWC1)<5 && PShower>550 && C2>200 && XDWC2>-20 && XDWC2<20"
+            #cut = "abs(YDWC2-YDWC1)<5 && abs(XDWC2-XDWC1)<5 && PShower>550 && C2>200 && XDWC2>-20 && XDWC2<20"
+            
+            
             #cut = "abs(YDWC2-YDWC1)<5 && abs(XDWC2-XDWC1)<5 && PShower>550 && C1>150 && C2>300 && C3>100 && XDWC2>-20 && XDWC2<20"
+
+
+            myCut = "(abs(XDWC2 - XDWC1) < 5) & (abs(YDWC2 - YDWC1)<5) & (MCounter<200) & (TailC<300) & (C2>160) & ( (totLeakage - L20)<5000 ) & (PShower>550)"
+
+
+            energy = 20
+            index = 1
+            cut = myCut + " & (XDWC2 > {0}) & (XDWC2 < {1}) & (YDWC2 > {2}) & (YDWC2 < {3})".format(cut_x_min[index], cut_x_max[index], cut_y_min[index], cut_y_max[index]) 
+
 
             #cut = "totPMTSene>40"
             # cut = "abs(YDWC2-YDWC1)<5 && abs(XDWC2-XDWC1)<5 && PShower>550 && C2>200 && YDWC2>-5"
